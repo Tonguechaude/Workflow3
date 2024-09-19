@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build
+        run: gcc puissance.c -o puissance-linux.bin
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: puissance-linux
+          path: ./puissance-linux.bin
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build
+        run: gcc puissance.c -o puissance-windows.exe
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: puissance-windows
+          path: ./puissance-windows.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build
+        run: gcc puissance.c -o puissance-macos
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: puissance-macos
+          path: ./puissance-macos
+
+  release:
+    needs: [build-ubuntu, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: puissance-linux
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: puissance-windows
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: puissance-macos
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            puissance-linux.bin
+            puissance-windows.exe
+            puissance-macos
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
